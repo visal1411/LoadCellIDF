@@ -37,14 +37,20 @@ An ESP-IDF component for interfacing with HX711 load cell amplifiers and weight 
 ### Adding to Your Project
 
 1.  Clone this repository:
-    Use the command: git clone https://github.com/ucukertz/hx711-idf hx711
+    ```bash
+    git clone https://github.com/ucukertz/hx711-idf hx711
+    ```
 
 2.  Add the hx711 component to your project's component folder:
-    Use the command: cp -r hx711/components/hx711 /path/to/your/esp-idf-project/components/
+    ```bash
+    cp -r hx711/components/hx711 /path/to/your/esp-idf-project/components/
+    ```
     Replace /path/to/your/esp-idf-project with the actual path to your ESP-IDF project.
 
-3.  Include the header in your project's source code:
-    Add this line: #include "hx711.h"
+4.  Include the header in your project's source code:
+    ```c
+    #include "hx711.h"
+    ```
 
 ## API Reference
 
