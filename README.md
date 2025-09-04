@@ -24,8 +24,8 @@ An ESP-IDF component for interfacing with HX711 load cell amplifiers and weight 
 |-----------|------------|------------------------|
 | VCC       | 3.3V       | Power supply           |
 | GND       | GND        | Ground                 |
-| DT (MISO) | Any GPIO   | Data output from HX711 |
-| SCK       | Any GPIO   | Clock input to HX711   |
+| DT (MISO) | Any GPIO   | Data pin               |
+| SCK       | Any GPIO   | Clock pin              |
 
 ## Installation
 
