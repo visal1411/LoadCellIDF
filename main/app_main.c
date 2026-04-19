@@ -16,7 +16,7 @@ const gpio_num_t GPIO_HX711_MISO    = GPIO_NUM_19;
 const gpio_num_t GPIO_HX711_SCK     = GPIO_NUM_18;
 static const uint32_t HX711_CALIB_DEVIATION_MAX = 300000;
 static const uint8_t HX711_CALIB_MAX_FAIL = 50;
-static const uint8_t HX711_CALIB_AVG_READ = 4;
+static const uint8_t HX711_CALIB_AVG_READ = 3;
 static const uint8_t HX711_TARE_AVG_READ = 10;
 static const uint8_t HX711_TARE_RETRY_MAX = 5;
 static const uint8_t HX711_FAIL_RECOVERY_THRESHOLD = 5;
@@ -27,20 +27,22 @@ static const float HX711_DISPLAY_ZERO_BAND_KG = 0.050f;
 static const float HX711_STEP_REPRIME_KG = 0.080f;
 static const int32_t HX711_SPIKE_REJECT_COUNTS = 50000;
 static const uint8_t HX711_SPIKE_CONFIRM_READS = 1;
-static const uint8_t HX711_STABILITY_WINDOW = 12;
-static const float HX711_STABILITY_SPREAD_KG = 0.010f;
+static const uint8_t HX711_STABILITY_WINDOW = 8;
+static const float HX711_STABILITY_SPREAD_KG = 0.008f;
 static const float HX711_STABILITY_MIN_KG = 0.050f;
+static const float HX711_STABLE_HOLD_DELTA_KG = 0.006f;
 
 // 20kg load-cell setup values.
 // counts_per_kg must be calibrated for your exact load-cell + HX711 module.
 static const float LOAD_CELL_CAPACITY_KG = 20.0f;
-// Temporary calibration from observed behavior: 500 ml bottle (~0.5 kg) was read as ~5 kg,
-// so counts_per_kg needs roughly 10x increase from 10500.
-static float HX711_COUNTS_PER_KG = 105000.0f;
+// Calibrated from latest reference data:
+// net_counts ~= 19500 for a known 0.184 kg phone.
+// counts_per_kg ~= 19500 / 0.184 ~= 105978.
+static float HX711_COUNTS_PER_KG = 106000.0f;
 
 // Simple moving average filter for weight stability
 // Larger filter = slower response but more stable readings
-#define WEIGHT_FILTER_SIZE 15
+#define WEIGHT_FILTER_SIZE 8
 static float weight_filter[WEIGHT_FILTER_SIZE] = {0};
 static uint8_t filter_index = 0;
 static uint8_t filter_ready = 0;
@@ -139,7 +141,7 @@ void app_main(void)
   hx711_init(&hx711, GPIO_HX711_MISO, GPIO_HX711_SCK, HX711_GAIN_128);
   hx711_set_max_deviation(&hx711, HX711_CALIB_DEVIATION_MAX);
   hx711_set_max_fail(&hx711, HX711_CALIB_MAX_FAIL);
-  hx711_set_wait_timeout(&hx711, 1500);
+  hx711_set_wait_timeout(&hx711, 500);
 
   ESP_LOGI(TAG, "Taring... Make sure no load is on the scale");
 
@@ -176,7 +178,7 @@ void app_main(void)
       ESP_LOGW(TAG, "ADC read failed (%lu)", (unsigned long)consecutive_fail);
 
       // Try single-shot recovery before falling back to stale data.
-      if (hx711_wait(&hx711, 500)) {
+      if (hx711_wait(&hx711, 1000)) {
         read_avg = hx711_read_data(&hx711);
         last_good_avg = read_avg;
         consecutive_fail = 0;
@@ -274,11 +276,23 @@ void app_main(void)
     bool is_stable = get_stable_weight(&stable_avg, &stable_spread);
 
     if (is_stable) {
-      stable_locked = true;
-      stable_weight_kg = stable_avg;
+      if (!stable_locked) {
+        // First lock: capture stable plateau.
+        stable_locked = true;
+        stable_weight_kg = stable_avg;
+      } else {
+        // Keep stable value fixed against tiny drift/creep.
+        // Only update when there is a meaningful change in load.
+        if (fabsf(stable_avg - stable_weight_kg) > HX711_STABLE_HOLD_DELTA_KG) {
+          stable_weight_kg = stable_avg;
+        }
+      }
     } else if (weight_filtered < (HX711_STABILITY_MIN_KG * 0.5f)) {
       stable_locked = false;
       stable_weight_kg = 0.0f;
+    } else if (stable_locked && fabsf(weight_filtered - stable_weight_kg) > (HX711_STABLE_HOLD_DELTA_KG * 1.5f)) {
+      // Unlock if load moved significantly and current window is not yet stable.
+      stable_locked = false;
     }
 
     ESP_LOGI(TAG, "Raw: %ld, Net: %ld, Weight: %.3f kg (filtered: %.3f kg, stable: %.3f kg, spread: %.3f kg) / %.1f kg (counts/kg: %.1f)",
@@ -296,6 +310,6 @@ void app_main(void)
     }
 
     // Slow read interval to allow load cell settling time between measurements
-    vTaskDelay(pdMS_TO_TICKS(1000));
+    vTaskDelay(pdMS_TO_TICKS(300));
   }
 }
