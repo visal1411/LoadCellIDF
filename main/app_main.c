@@ -16,8 +16,8 @@ const gpio_num_t GPIO_HX711_MISO    = GPIO_NUM_19;
 const gpio_num_t GPIO_HX711_SCK     = GPIO_NUM_18;
 static const uint32_t HX711_CALIB_DEVIATION_MAX = 300000;
 static const uint8_t HX711_CALIB_MAX_FAIL = 50;
-static const uint8_t HX711_CALIB_AVG_READ = 8;
-static const uint8_t HX711_TARE_AVG_READ = 25;
+static const uint8_t HX711_CALIB_AVG_READ = 4;
+static const uint8_t HX711_TARE_AVG_READ = 10;
 static const uint8_t HX711_TARE_RETRY_MAX = 5;
 static const uint8_t HX711_FAIL_RECOVERY_THRESHOLD = 5;
 static const int32_t HX711_ZERO_BAND_COUNTS = 5500;
@@ -176,7 +176,7 @@ void app_main(void)
       ESP_LOGW(TAG, "ADC read failed (%lu)", (unsigned long)consecutive_fail);
 
       // Try single-shot recovery before falling back to stale data.
-      if (hx711_wait(&hx711, 2000)) {
+      if (hx711_wait(&hx711, 500)) {
         read_avg = hx711_read_data(&hx711);
         last_good_avg = read_avg;
         consecutive_fail = 0;

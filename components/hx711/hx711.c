@@ -1,7 +1,7 @@
 #include "hx711.h"
 
 static const uint32_t TIMEOUT_MIN_MS = portTICK_PERIOD_MS;
-static const uint32_t DEFAULT_TIMEOUT_MS = 200;
+static const uint32_t DEFAULT_TIMEOUT_MS = 100;
 static const uint8_t DEFAULT_MAX_FAIL = 10;
 static const uint32_t DEFAULT_MAX_DEVIATION = 300000;
 
