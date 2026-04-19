@@ -1,2 +1,22 @@
-build
-.vscode
+build/
+
+# ESP-IDF generated files
+sdkconfig.old
+sdkconfig.bak
+flasher_args.json
+partition_table/
+*.bin
+*.elf
+*.map
+*.log
+
+# C/C++ tooling outputs
+compile_commands.json
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+
+# Keep workspace settings, ignore the rest
+.vscode/*
+!.vscode/settings.json

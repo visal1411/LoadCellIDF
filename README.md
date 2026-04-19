@@ -24,8 +24,19 @@ An ESP-IDF component for interfacing with HX711 load cell amplifiers and weight 
 |-----------|------------|------------------------|
 | VCC       | 3.3V       | Power supply           |
 | GND       | GND        | Ground                 |
-| DT (MISO) | Any GPIO   | Data pin               |
-| SCK       | Any GPIO   | Clock pin              |
+| DT (DOUT) | GPIO19     | Data pin (project default) |
+| SCK       | GPIO18     | Clock pin (project default) |
+
+### Load Cell to HX711 Wiring
+
+| Load Cell Wire | HX711 Pin |
+|----------------|-----------|
+| Red            | E+        |
+| Black          | E-        |
+| White          | A-        |
+| Green          | A+        |
+
+Note: some load cells use different wire colors. If your readings are negative or unstable, check your load-cell datasheet and swap A+/A- if needed.
 
 ## Installation
 
@@ -105,6 +116,17 @@ Read average of multiple parsed values with error handling. Parameters: pointer 
 
 ## Basic Usage
 Include the headers and define a static HX711 device descriptor. Set GPIO pins for MISO (DT) and SCK. In app_main, initialize the HX711 with gain 128, configure parameters like max deviation, timeout, and max failures. Then in a loop, read average values and handle errors appropriately.
+
+### 20kg Configuration (included in this project)
+
+The sample in `main/app_main.c` is configured for a 20kg scale workflow:
+- Uses HX711 gain 128 on channel A
+- Uses GPIO19 for DT and GPIO18 for SCK
+- Performs tare at startup (no load on the scale)
+- Converts net HX711 counts to kilograms using `HX711_COUNTS_PER_KG`
+- Warns when measured weight exceeds 20kg
+
+Calibrate `HX711_COUNTS_PER_KG` with a known reference weight for best accuracy.
 
 ## Configuration Tips
 

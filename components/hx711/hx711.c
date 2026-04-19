@@ -1,6 +1,6 @@
 #include "hx711.h"
 
-static const uint32_t TIMEOUT_MIN_MS = portTICK_RATE_MS;
+static const uint32_t TIMEOUT_MIN_MS = portTICK_PERIOD_MS;
 static const uint32_t DEFAULT_TIMEOUT_MS = 200;
 static const uint8_t DEFAULT_MAX_FAIL = 10;
 static const uint32_t DEFAULT_MAX_DEVIATION = 300000;
@@ -106,7 +106,7 @@ bool hx711_wait(hx711_t* hx711, size_t timeout_ms)
   while (esp_timer_get_time()/1000 - start_ms < timeout_ms)
   {
     if (hx711_is_ready(hx711)) return true;
-    vTaskDelay(portTICK_RATE_MS);
+    vTaskDelay(pdMS_TO_TICKS(1));
   }
 
   return false;
